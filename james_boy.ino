@@ -20,10 +20,6 @@
 // https://learn.adafruit.com/adafruit-gfx-graphics-library/graphics-primitives
 // http://marlinfw.org/tools/u8glib/converter.html
 
-// keyboard for debugging
-//char selectGame = 'a';  // Key to steer left
-//char selectSetup = 's'; // Key to steer right
-
 // TODO move states and events to a header file.
 enum states
 {
@@ -302,22 +298,6 @@ int value = 0;
 
 void loop()
 {
-  //  keyboard example for debugging
-  //  if (Serial.available())
-  //  { // Returns true if there is serial input.
-  //    char ch = Serial.read();
-  //    if (ch == selectGame)
-  //    {
-  //      step_state(HIGHLIGHT_GAME_MODE);
-  //      Serial.write("Game");
-  //    }
-  //    if (ch == selectSetup)
-  //    {
-  //      step_state(HIGHLIGHT_SETUP_MODE);
-  //      Serial.write("Setup");
-  //    }
-  //  }
-  //  Serial.print(digitalRead(SW_pin));)
 
   // MENU STATE Event Handling. TODO Move to a controller that considers state.
   if (currentState == MENU)
