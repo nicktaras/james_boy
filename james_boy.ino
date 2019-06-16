@@ -9,6 +9,50 @@
 // https://learn.adafruit.com/adafruit-gfx-graphics-library/graphics-primitives
 // http://marlinfw.org/tools/u8glib/converter.html
 
+char selectGame = 'a';  // Key to steer left
+char selectSetup = 's'; // Key to steer right
+
+enum states {
+    START,
+    MENU,
+    SETUP,
+    GAME,
+} state;
+
+states currentState = MENU;
+
+enum events {
+    START_INIT,
+    HIGHLIGHT_GAME_MODE,
+    HIGHLIGHT_SETUP_MODE,
+    SELECT_MODE,
+    SETUP_MODE,
+    GAME_MODE
+};
+
+void step_state(enum events event) {
+    switch(currentState) {
+    case START:
+        // run intro sequence here
+        break;
+    case MENU:
+        switch(event) {
+        case HIGHLIGHT_GAME_MODE:
+            select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
+            clearSelect(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
+            break;
+        case HIGHLIGHT_SETUP_MODE:
+            select(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
+            clearSelect(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
+            break;
+        case SELECT_MODE:
+            printf("Highlight Selection");
+//            state = X; - Change state to new view
+            break;
+        }
+    }
+}
+
 #define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
 
@@ -125,10 +169,10 @@ void setup()
   drawBitmap(45, 1, menu_title, menu_title_BMPWIDTH, menu_title_BMPHEIGHT);
   drawBitmap(games_text_X, games_text_Y, games_text, games_text_BMPWIDTH, games_text_BMPHEIGHT);
   drawBitmap(setup_text_X, setup_text_Y, setup_text, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
-//  select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
-  select(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
   display.display();
 }
+
+
 
 // Games or Setup
 void select(short int start_x, short int start_y, short int width, short int height)
@@ -137,10 +181,30 @@ void select(short int start_x, short int start_y, short int width, short int hei
   short int selectLineEndX = start_x + width;
   // display.drawLine from x, from y, tox, toy, colour.
   display.drawLine(start_x, selectLineY, selectLineEndX, selectLineY, WHITE);
+  display.display();
+}
+void clearSelect(short int start_x, short int start_y, short int width, short int height)
+{
+  short int selectLineY = start_y + height + 2;
+  short int selectLineEndX = start_x + width;
+  // display.drawLine from x, from y, tox, toy, colour.
+  display.drawLine(start_x, selectLineY, selectLineEndX, selectLineY, BLACK);
+  display.display();
 }
 
 void loop()
 {
+ if (Serial.available()) {  // Returns true if there is serial input.
+    char ch = Serial.read();
+    if (ch == selectGame) {
+      step_state(HIGHLIGHT_GAME_MODE);
+      Serial.write("Game");
+    }
+    if (ch == selectSetup) {
+      step_state(HIGHLIGHT_SETUP_MODE);
+      Serial.write("Setup");
+    }
+  }
 }
 
 void animateStars(const uint8_t *bitmap, uint8_t w, uint8_t h)
