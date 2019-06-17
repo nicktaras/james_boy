@@ -11,6 +11,12 @@
 #include "setup_screen_map.h"
 #include "ui_map.h"
 
+// PINS JOYSTICK:
+// GND - GND / 5 = 5 / VRX = A0 / VRY = A1 / SW = 8
+
+// PINS SCREEN
+// SDA = A4 / SCL = A5 / VCC = 5 / GND = GND
+
 // GAME Bitmaps
 #include "games/maze_xy/maze_xy_map.h"
 
@@ -317,7 +323,7 @@ void loop()
       stateController(SELECT_MODE);
     }
   }
-  if (currentState == GAME_MODE)
+  if (currentState == GAME)
   {
     if (analogRead(A0) < 10) // Back
     {
