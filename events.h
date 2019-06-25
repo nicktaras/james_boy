@@ -1,0 +1,19 @@
+#ifndef _EVENTS_H
+#define _EVENTS_H
+
+// All Game System Events.
+enum events
+{
+  START_INIT,
+  MAIN_MENU,
+  HIGHLIGHT_GAME_MENU,
+  SHOW_NEXT_GAME,
+  HIGHLIGHT_SETUP_MENU,
+  SELECT_MODE,
+  HIGHLIGHT_GAME,
+  HIGHLIGHT_BACK_BUTTON,
+  SETUP_MENU,
+  GAME_MENU
+};
+
+#endif

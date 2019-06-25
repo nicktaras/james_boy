@@ -75,7 +75,6 @@ const unsigned char maze_xy[] PROGMEM = {
     B00000000,
     B00010000,
     B01000001,
-    B11000000,
-};
+    B11000000};
 
 #endif
