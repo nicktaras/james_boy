@@ -30,13 +30,20 @@
 #include "setup_screen_map.h"
 #include "ui_map.h"
 
-// Game Height and Width settings.
-// Exposes two public variables: screen_width, screen_height.
-#include "system_display_config.h";
-
 // GAME Bitmaps.
 #include "games/maze_xy/maze_xy_map.h"
 #include "games/quiz_num/quiz_num_map.h"
+
+// Reset Pin.
+#define OLED_RESET 4
+
+// Initialise Adafruit_SSD1306 display.
+Adafruit_SSD1306 display(OLED_RESET);
+
+// Ensure the hardware is the correct resolution.
+#if (SSD1306_LCDHEIGHT != 32 || SSD1306_LCDWIDTH != 128)
+#error("Incorrect display resolution");
+#endif
 
 // Games Array Loader. Should look up all games. TODO.
 // Define Game Index as 0 on init.
@@ -52,73 +59,212 @@ states currentState;
 #include "events.h";
 events currentEvent;
 
+// Joy
+//int joyRight = 667;
+//int joyLeft = 0;
+//int joUp = 0;
+//int joyDown = 667;
+// Joy Usage with buffer.
+int joyRight = 640;
+int joyLeft = 30;
+int joyUp = 30;
+int joyDown = 640;
+
+// stateController(HIGHLIGHT_GAME_MENU);
+void menuStateController(enum events event)
+{
+  switch (event)
+  {
+  case MAIN_MENU_INIT:
+    Serial.print("MAIN_MENU_INIT");
+    menuView();
+    // Select First Game
+    select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
+    clearSelect(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
+    setEvent(HIGHLIGHT_GAME_MENU);
+    break;
+  case HIGHLIGHT_GAME_MENU:
+    Serial.print("HIGHLIGHT_GAME_MENU");
+    select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
+    clearSelect(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
+    break;
+  case HIGHLIGHT_SETUP_MENU:
+    select(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
+    clearSelect(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
+    break;
+  case SELECT:
+    if (currentEvent == HIGHLIGHT_GAME_MENU)
+    {
+      setState(GAME);
+      stateController(GAME_MENU_INIT);
+    }
+    if (currentEvent == HIGHLIGHT_SETUP_MENU)
+    {
+      setState(SETUP);
+      stateController(SETUP_MENU_INIT);
+    }
+    break;
+  default:
+    Serial.print("do nothing");
+  }
+}
+
+void setupStateController(enum events event)
+{
+  switch (event)
+  {
+  case SETUP_MENU_INIT:
+    // setupView();
+//    Serial.print("SETUP_MENU_INIT");
+    break;
+  default:
+//    Serial.print("do nothing");
+    break;
+  }
+}
+
+void gameStateController(enum events event)
+{
+  switch (event)
+  {
+  case MAIN_MENU_INIT: // BACK TO MENU
+     setState(MENU);
+     stateController(MAIN_MENU_INIT);
+    break;
+  case GAME_MENU_INIT: // INIT GAME MENU
+    gamesView();
+    break;
+  case SHOW_NEXT_GAME: // SHOW NEXT GAME TITLE
+    currentGameIndex = getNextSelectedGame();
+    gamesView();
+    break;
+  case SHOW_PREV_GAME: // SHOW PREV GAME TITLE
+    currentGameIndex = getPrevSelectedGame();
+    gamesView();
+    
+    break;
+  case SELECT: // SELECT
+  break;
+  default:
+    Serial.print("do nothing");
+  }
+  select(30, 20, 68, 8); // underline
+}
+
 void stateController(enum events event)
 {
   switch (currentState)
   {
   case START:
-    intro();
+    setState(MENU);
+    menuStateController(MAIN_MENU_INIT);
     break;
   case MENU:
-    switch (event)
-    {
-    case MAIN_MENU:
-      menuView();
-      break;
-    case HIGHLIGHT_GAME_MENU:
-      select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
-      clearSelect(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
-      break;
-    case HIGHLIGHT_SETUP_MENU:
-      select(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
-      clearSelect(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
-      break;
-    case SELECT_MODE:
-      if (currentEvent == HIGHLIGHT_GAME_MENU)
-      {
-        gamesView();
-        setState(GAME);
-      }
-      if (currentEvent == HIGHLIGHT_SETUP_MENU)
-      {
-        setupView();
-        setState(SETUP);
-      }
-      break;
-    }
-  case GAME:
-    switch (event)
-    {
-    case HIGHLIGHT_BACK_BUTTON:
-      //select(0, 1, arrow_back_BMPWIDTH, arrow_back_BMPHEIGHT);
-      //clearSelect(maze_xy_x, 20, maze_xy_BMPWIDTH, maze_xy_BMPHEIGHT);
-      break;
-    case HIGHLIGHT_GAME:
-      //select(maze_xy_x, 20, maze_xy_BMPWIDTH, maze_xy_BMPHEIGHT);
-      //clearSelect(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
-      break;
-    case SHOW_NEXT_GAME:
-      currentGameIndex = getNextSelectedGame();
-      gamesView();
-      setState(GAME);
-      break;
-    }
+    menuStateController(event);
     break;
+  case SETUP:
+  case GAME:
+    gameStateController(event);
+  default:
+    Serial.print("CurrentState is not defined");
   }
   setEvent(event);
 }
 
-#define OLED_RESET 4
-Adafruit_SSD1306 display(OLED_RESET);
-
-#define DELTAY 2
-
-#define XPOS 0
-#define YPOS 0
-
-#if (SSD1306_LCDHEIGHT != 32)
-#error("Height incorrect, please fix Adafruit_SSD1306.h!");
-#endif
+// void stateController(enum events event)
+// {
+//   switch (currentState)
+//   {
+// case START:
+//   Serial.print("START MODE");
+//   intro();
+//   break;
+//   case MENU:
+//     Serial.print("MENU MODE");
+//     switch (event)
+//     {
+//     case MAIN_MENU_INIT:
+//       Serial.print("MAIN_MENU_INIT");
+//       break;
+//     case HIGHLIGHT_GAME_MENU:
+//       Serial.print("HIGHLIGHT_GAME_MENU");
+//       break;
+//     case HIGHLIGHT_SETUP_MENU:
+//       Serial.print("HIGHLIGHT_SETUP_MENU");
+//       break;
+//     case SELECT_MODE:
+//       Serial.print("SELECT_MODE");
+//       break;
+// default:
+//   // do nothing.
+// }
+//     //      // Load Menu View
+//     //      //menuView();
+//     //      // Highlight First menu item.
+//     //      //select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
+//     //      //clearSelect(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
+//     //      break;
+//     //    case HIGHLIGHT_GAME_MENU:
+//     //      // underline the selected item
+//     //      select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
+//     //      clearSelect(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
+//     //      break;
+//     //    case HIGHLIGHT_SETUP_MENU:
+//     //      // underline the selected item
+//     //      select(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
+//     //      clearSelect(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
+//     //      break;
+//     //    case SELECT_MODE:
+     //      if (currentEvent == HIGHLIGHT_GAME_MENU)
+     //      {
+//             setState(GAME);
+//             stateController(GAME_MENU_INIT);
+     //      }
+     //      if (currentEvent == HIGHLIGHT_SETUP_MENU)
+     //      {
+     //        setState(SETUP);
+     //        stateController(SETUP_MENU_INIT);
+     //      }
+//     //      break;
+//   case SETUP:
+// Serial.print("SETUP MODE");
+// switch (event)
+// {
+// case SETUP_MENU_INIT:
+//   setupView();
+//   break;
+// default:
+//   break;
+// }
+//   case GAME:
+//   Serial.print("GAME MODE");
+//   switch (event)
+//   {
+//   case MAIN_MENU_INIT:
+//     Serial.print("GO_BACK_TO_MENU");
+//     Serial.print(analogRead(A1));
+//     // Go back to game menu
+//     // setState(MENU);
+//     // stateController(MAIN_MENU_INIT);
+//     break;
+//   case GAME_MENU_INIT:
+//     // Go back to game menu
+//     // setState(MENU);
+//     // stateController(MAIN_MENU_INIT);
+//     break;
+//   case SHOW_NEXT_GAME:
+//     currentGameIndex = getNextSelectedGame();
+//     gamesView();
+//     break;
+//   case SELECT_MODE:
+//     // Bootup the game
+//     break;
+//   }
+// default:
+//   // do nothing.
+// }
+//   setEvent(event);
+// }
 
 // #define SIZE 200
 const int SW_pin = 8; // digital pin connected to switch output
@@ -140,7 +286,7 @@ void setup()
 
   // Initial Sequence. Show intro.
   setState(START);
-  stateController(START_INIT);
+  stateController(START_INTRO_INIT);
 }
 
 void intro()
@@ -234,7 +380,7 @@ void intro()
   display.clearDisplay();
   // Move to menu.
   setState(MENU);
-  stateController(MAIN_MENU);
+  stateController(MAIN_MENU_INIT);
 }
 
 void setState(states _state)
@@ -256,6 +402,10 @@ int getNextSelectedGame()
 {
   return (currentGameIndex + 1) % sizeof(currentGameIndex);
 }
+int getPrevSelectedGame()
+{
+  return (currentGameIndex - 1) % sizeof(currentGameIndex);
+}
 
 void menuView()
 {
@@ -263,8 +413,6 @@ void menuView()
   drawBitmap(45, 1, menu_title, menu_title_BMPWIDTH, menu_title_BMPHEIGHT);
   drawBitmap(games_text_X, games_text_Y, games_text, games_text_BMPWIDTH, games_text_BMPHEIGHT);
   drawBitmap(setup_text_X, setup_text_Y, setup_text, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
-  // Highlight First menu item onload of view.
-  stateController(HIGHLIGHT_GAME_MENU);
   display.display();
 }
 
@@ -275,8 +423,8 @@ void gamesView()
   short int _gameLogoWidth = 68;
   short int _gameLogoHeight = 8;
   // Calculate the center point for Menu and Games bitmaps.
-  short int _game_menu_title_x = getCenter(screen_width, game_title_BMPWIDTH);
-  short int _curr_game_logo_x = getCenter(screen_width, _gameLogoWidth);
+  short int _game_menu_title_x = getCenter(SSD1306_LCDWIDTH, game_title_BMPWIDTH);
+  short int _curr_game_logo_x = getCenter(SSD1306_LCDWIDTH, _gameLogoWidth);
   // GAMES MENU //
   drawBitmap(_game_menu_title_x, 1, game_title, game_title_BMPWIDTH, game_title_BMPHEIGHT);
   drawBitmap(_curr_game_logo_x, 20, games[currentGameIndex], _gameLogoWidth, _gameLogoHeight);
@@ -313,44 +461,60 @@ void clearSelect(short int start_x, short int start_y, short int width, short in
 void loop()
 {
 
+  // Reference:
+  //int joyRight = 655;
+  //int joyLeft = 15;
+  //int joUp = 15;
+  //int joyDown = 655;
+
   // MENU STATE Event Handling. TODO Move to a controller that considers state.
   if (currentState == MENU)
   {
-    if (analogRead(A0) < 10)
+    if (analogRead(A0) < joyLeft)
     {
-      Serial.print("GAME MODE");
       stateController(HIGHLIGHT_GAME_MENU);
     }
-    if (analogRead(A0) > 1013)
+    if (analogRead(A0) > joyRight)
     {
-      Serial.print("SETUP MODE");
       stateController(HIGHLIGHT_SETUP_MENU);
     }
     if (digitalRead(SW_pin) == 0)
     {
-      stateController(SELECT_MODE);
+      stateController(SELECT); 
     }
   }
   if (currentState == GAME)
   {
-    // if UP is used
-    // if (analogRead(A0) < 10) // Back
-    // {
-    //   Serial.print("HIGHLIGHT_BACK_BUTTON");
-    //   stateController(HIGHLIGHT_BACK_BUTTON);
-    // }
+    if (analogRead(A1) < joyUp) // Back on Up press
+    {
+      stateController(MAIN_MENU_INIT);
+    }
     if (analogRead(A0) < 10 || analogRead(A0) > 1013) // Game
     {
-      // Serial.print("HIGHLIGHT_GAME");
-      // stateController(HIGHLIGHT_GAME);
-      Serial.print("SHOW_NEXT_GAME");
+      stateController(SELECT);
+    }
+    if (analogRead(A0) < joyLeft)
+    {
+      stateController(SHOW_PREV_GAME);
+    }
+    if (analogRead(A0) > joyRight)
+    {
       stateController(SHOW_NEXT_GAME);
     }
-    if (digitalRead(SW_pin) == 0)
-    {
-      stateController(SELECT_MODE);
-    }
   }
+//  if (currentState == SETUP)
+//  {
+//    if (analogRead(A1) == 0) // Back on Up press
+//    {
+////      Serial.print("TEST - GO_BACK_TO_MENU");
+////      stateController(MAIN_MENU_INIT);
+//    }
+//  }
+//  // Common functions.
+//  if (digitalRead(SW_pin) == 0)
+//  {
+//    stateController(currentEvent); // review this..
+//  }
 }
 
 // Loading Stars effect.
