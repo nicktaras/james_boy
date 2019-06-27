@@ -245,4 +245,3 @@ const unsigned char setup_text[] PROGMEM = {
     B00000000};
 
 #endif // _MENUTEXTMAP_H
-

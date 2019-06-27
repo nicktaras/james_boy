@@ -23,7 +23,7 @@
 // Assists with various input and output types, including the infamous NULL pointer.
 #include <unistd.h>
 
-// 
+//
 #include "pitches.h"
 
 // SYSTEM Bitmap Graphics.
@@ -31,7 +31,6 @@
 #include "menu_screen_map.h"
 #include "game_screen_map.h"
 #include "setup_screen_map.h"
-#include "ui_map.h"
 
 // GAME Bitmaps.
 #include "games/maze_xy/maze_xy_map.h"
@@ -61,19 +60,17 @@ int buzzer = 9;
 int volume = 1;
 int tempo = 200;
 int melody[] = {
-  NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1,
-  NOTE_D4, NOTE_D3, NOTE_D2, NOTE_D1, NOTE_E4, NOTE_E3, NOTE_E2, NOTE_E1, NOTE_G4, NOTE_G3, NOTE_C2, NOTE_D1, NOTE_D4, NOTE_E3, NOTE_E2, NOTE_E1,
-  NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1,
-  NOTE_D4, NOTE_D3, NOTE_D2, NOTE_D1, NOTE_E4, NOTE_E3, NOTE_E2, NOTE_E1, NOTE_G4, NOTE_G3, NOTE_C2, NOTE_D1, NOTE_D4, NOTE_E3, NOTE_E2, 0
-};
+    NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1,
+    NOTE_D4, NOTE_D3, NOTE_D2, NOTE_D1, NOTE_E4, NOTE_E3, NOTE_E2, NOTE_E1, NOTE_G4, NOTE_G3, NOTE_C2, NOTE_D1, NOTE_D4, NOTE_E3, NOTE_E2, NOTE_E1,
+    NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1,
+    NOTE_D4, NOTE_D3, NOTE_D2, NOTE_D1, NOTE_E4, NOTE_E3, NOTE_E2, NOTE_E1, NOTE_G4, NOTE_G3, NOTE_C2, NOTE_D1, NOTE_D4, NOTE_E3, NOTE_E2, 0};
 
 // note durations: 4 = quarter note, 8 = eighth note, etc.:
 int noteDurations[] = {
-  1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
-  1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
-  1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
-  1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 0
-};
+    1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+    1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+    1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+    1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 0};
 
 // All Game System States.
 #include "states.h";
@@ -100,12 +97,14 @@ void menuStateController(enum events event)
   switch (event)
   {
   case MAIN_MENU_INIT:
-    Serial.print("MAIN_MENU_INIT");
-    menuView();
-    // Select First Game
-    select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
-    clearSelect(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
-    setEvent(HIGHLIGHT_GAME_MENU);
+    // Fix only redraw page when it isn't already drawn.
+    if (currentEvent != MAIN_MENU_INIT)
+    {
+      menuView();
+      select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
+      clearSelect(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
+      setEvent(HIGHLIGHT_GAME_MENU);
+    }
     break;
   case HIGHLIGHT_GAME_MENU:
     Serial.print("HIGHLIGHT_GAME_MENU");
@@ -137,12 +136,15 @@ void setupStateController(enum events event)
 {
   switch (event)
   {
+  case MAIN_MENU_INIT: // BACK TO MENU
+    setState(MENU);
+    stateController(MAIN_MENU_INIT);
+    break;
   case SETUP_MENU_INIT:
-    // setupView();
-//    Serial.print("SETUP_MENU_INIT");
+    setupView();
     break;
   default:
-//    Serial.print("do nothing");
+    Serial.print("do nothing");
     break;
   }
 }
@@ -152,8 +154,8 @@ void gameStateController(enum events event)
   switch (event)
   {
   case MAIN_MENU_INIT: // BACK TO MENU
-     setState(MENU);
-     stateController(MAIN_MENU_INIT);
+    setState(MENU);
+    stateController(MAIN_MENU_INIT);
     break;
   case GAME_MENU_INIT: // INIT GAME MENU
     gamesView();
@@ -170,11 +172,10 @@ void gameStateController(enum events event)
     select(30, 20, 68, 8); // underline game title logo
     break;
   case SELECT: // SELECT
-  break;
+    break;
   default:
     Serial.print("do nothing");
   }
-  
 }
 
 void stateController(enum events event)
@@ -182,7 +183,7 @@ void stateController(enum events event)
   switch (currentState)
   {
   case START:
-     intro();
+    intro();
     // DEVELOPMENT > Jump to other states for testing.
     // setState(MENU);
     // menuStateController(MAIN_MENU_INIT);
@@ -191,6 +192,7 @@ void stateController(enum events event)
     menuStateController(event);
     break;
   case SETUP:
+    setupStateController(event);
   case GAME:
     gameStateController(event);
   default:
@@ -202,7 +204,7 @@ void stateController(enum events event)
 // #define SIZE 200
 const int SW_pin = 8; // digital pin connected to switch output
 
-unsigned long previousMillis = 0;        // will store last time LED was updated
+unsigned long previousMillis = 0; // will store last time LED was updated
 
 void setup()
 {
@@ -211,12 +213,12 @@ void setup()
   // Sound
   pinMode(buzzer, OUTPUT); // Set buzzer - pin 9 as an output SETUP...!!!
   analogWrite(buzzer, volume);
-  
+
   // Setup Pins
   pinMode(SW_pin, INPUT);
   digitalWrite(SW_pin, HIGH);
   noTone(buzzer);
-  
+
   // Notes from Adafruit sketch - must investigate.
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // initialize with the I2C addr 0x3C (for the 128x32)
@@ -228,37 +230,38 @@ void setup()
   setState(START);
   stateController(START_INTRO_INIT);
 
-    for (int thisNote = 0; thisNote < 75; thisNote++) {
-  
-      // to calculate the note duration, take one second divided by the note type.
-      //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-      int noteDuration = tempo / noteDurations[thisNote];
-      tone(buzzer, melody[thisNote], noteDuration);
-  
-      // to distinguish the notes, set a minimum time between them.
-      // the note's duration + 30% seems to work well:
-      int pauseBetweenNotes = noteDuration * 1.30;
-      
-      delay(pauseBetweenNotes);
-  
-//      unsigned long currentMillis = millis();
-  
-//      if (currentMillis - previousMillis >= pauseBetweenNotes) {
-//        
-//        // save the last time you blinked the LED
-//        previousMillis = currentMillis;
-//  
-//        // stop the tone playing:
-//        noTone(buzzer);
-//    
-//      }
+  // TODO Fix Non-blocking sound sequence!!
 
-      noTone(buzzer);
-     
-  }
+  //   for (int thisNote = 0; thisNote < 75; thisNote++) {
+  //
+  //      // to calculate the note duration, take one second divided by the note type.
+  //      //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+  //      int noteDuration = tempo / noteDurations[thisNote];
+  //      tone(buzzer, melody[thisNote], noteDuration);
+  //
+  //      // to distinguish the notes, set a minimum time between them.
+  //      // the note's duration + 30% seems to work well:
+  //      int pauseBetweenNotes = noteDuration * 1.30;
+  //
+  //      delay(pauseBetweenNotes);
+  //
+  //      unsigned long currentMillis = millis();
 
-  noTone(buzzer);
-  
+  //      if (currentMillis - previousMillis >= pauseBetweenNotes) {
+  //
+  //        // save the last time you blinked the LED
+  //        previousMillis = currentMillis;
+  //
+  //        // stop the tone playing:
+  //        noTone(buzzer);
+  //
+  //      }
+
+  //      noTone(buzzer);
+  //
+  //  }
+  //
+  //  noTone(buzzer);
 }
 
 void intro()
@@ -408,7 +411,6 @@ void setupView()
 {
   display.clearDisplay();
   drawBitmap(64 - setup_title_BMPWIDTH / 2, 1, setup_title, setup_title_BMPWIDTH, setup_title_BMPHEIGHT);
-  drawBitmap(0, 1, arrow_back, arrow_back_BMPWIDTH, arrow_back_BMPHEIGHT);
   display.display();
 }
 
@@ -452,7 +454,7 @@ void loop()
     }
     if (digitalRead(SW_pin) == 0)
     {
-      stateController(SELECT); 
+      stateController(SELECT);
     }
   }
   if (currentState == GAME)
@@ -474,19 +476,13 @@ void loop()
       stateController(SHOW_NEXT_GAME);
     }
   }
-//  if (currentState == SETUP)
-//  {
-//    if (analogRead(A1) == 0) // Back on Up press
-//    {
-////      Serial.print("TEST - GO_BACK_TO_MENU");
-////      stateController(MAIN_MENU_INIT);
-//    }
-//  }
-//  // Common functions.
-//  if (digitalRead(SW_pin) == 0)
-//  {
-//    stateController(currentEvent); // review this..
-//  }
+  if (currentState == SETUP)
+  {
+    if (analogRead(A1) < joyUp) // Back on Up press
+    {
+      stateController(MAIN_MENU_INIT);
+    }
+  }
 }
 
 // Loading Stars effect.
