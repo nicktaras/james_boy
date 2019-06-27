@@ -59,7 +59,7 @@ states currentState;
 #include "events.h";
 events currentEvent;
 
-// Joy
+// Joy - Actual values.
 //int joyRight = 667;
 //int joyLeft = 0;
 //int joUp = 0;
@@ -133,22 +133,24 @@ void gameStateController(enum events event)
     break;
   case GAME_MENU_INIT: // INIT GAME MENU
     gamesView();
+    select(30, 20, 68, 8); // underline game title logo
     break;
   case SHOW_NEXT_GAME: // SHOW NEXT GAME TITLE
     currentGameIndex = getNextSelectedGame();
     gamesView();
+    select(30, 20, 68, 8); // underline game title logo
     break;
   case SHOW_PREV_GAME: // SHOW PREV GAME TITLE
     currentGameIndex = getPrevSelectedGame();
     gamesView();
-    
+    select(30, 20, 68, 8); // underline game title logo
     break;
   case SELECT: // SELECT
   break;
   default:
     Serial.print("do nothing");
   }
-  select(30, 20, 68, 8); // underline
+  
 }
 
 void stateController(enum events event)
