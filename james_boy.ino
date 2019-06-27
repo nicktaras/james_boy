@@ -23,6 +23,9 @@
 // Assists with various input and output types, including the infamous NULL pointer.
 #include <unistd.h>
 
+// 
+#include "pitches.h"
+
 // SYSTEM Bitmap Graphics.
 #include "loading_screen_map.h"
 #include "menu_screen_map.h"
@@ -50,6 +53,27 @@ Adafruit_SSD1306 display(OLED_RESET);
 // Selection of Games live inside the publically defined games array.
 int currentGameIndex = 0;
 char *games[2] = {maze_xy, quiz_num};
+
+// Pins Piezo
+// 2 is ground
+// 1 is PWR
+int buzzer = 9;
+int volume = 1;
+int tempo = 200;
+int melody[] = {
+  NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1,
+  NOTE_D4, NOTE_D3, NOTE_D2, NOTE_D1, NOTE_E4, NOTE_E3, NOTE_E2, NOTE_E1, NOTE_G4, NOTE_G3, NOTE_C2, NOTE_D1, NOTE_D4, NOTE_E3, NOTE_E2, NOTE_E1,
+  NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1, NOTE_C4, NOTE_C3, NOTE_C2, NOTE_C1,
+  NOTE_D4, NOTE_D3, NOTE_D2, NOTE_D1, NOTE_E4, NOTE_E3, NOTE_E2, NOTE_E1, NOTE_G4, NOTE_G3, NOTE_C2, NOTE_D1, NOTE_D4, NOTE_E3, NOTE_E2, 0
+};
+
+// note durations: 4 = quarter note, 8 = eighth note, etc.:
+int noteDurations[] = {
+  1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+  1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+  1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+  1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 0
+};
 
 // All Game System States.
 #include "states.h";
@@ -158,8 +182,10 @@ void stateController(enum events event)
   switch (currentState)
   {
   case START:
-    setState(MENU);
-    menuStateController(MAIN_MENU_INIT);
+     intro();
+    // DEVELOPMENT > Jump to other states for testing.
+    // setState(MENU);
+    // menuStateController(MAIN_MENU_INIT);
     break;
   case MENU:
     menuStateController(event);
@@ -173,112 +199,24 @@ void stateController(enum events event)
   setEvent(event);
 }
 
-// void stateController(enum events event)
-// {
-//   switch (currentState)
-//   {
-// case START:
-//   Serial.print("START MODE");
-//   intro();
-//   break;
-//   case MENU:
-//     Serial.print("MENU MODE");
-//     switch (event)
-//     {
-//     case MAIN_MENU_INIT:
-//       Serial.print("MAIN_MENU_INIT");
-//       break;
-//     case HIGHLIGHT_GAME_MENU:
-//       Serial.print("HIGHLIGHT_GAME_MENU");
-//       break;
-//     case HIGHLIGHT_SETUP_MENU:
-//       Serial.print("HIGHLIGHT_SETUP_MENU");
-//       break;
-//     case SELECT_MODE:
-//       Serial.print("SELECT_MODE");
-//       break;
-// default:
-//   // do nothing.
-// }
-//     //      // Load Menu View
-//     //      //menuView();
-//     //      // Highlight First menu item.
-//     //      //select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
-//     //      //clearSelect(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
-//     //      break;
-//     //    case HIGHLIGHT_GAME_MENU:
-//     //      // underline the selected item
-//     //      select(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
-//     //      clearSelect(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
-//     //      break;
-//     //    case HIGHLIGHT_SETUP_MENU:
-//     //      // underline the selected item
-//     //      select(setup_text_X, setup_text_Y, setup_text_BMPWIDTH, setup_text_BMPHEIGHT);
-//     //      clearSelect(games_text_X, games_text_Y, games_text_BMPWIDTH, games_text_BMPHEIGHT);
-//     //      break;
-//     //    case SELECT_MODE:
-     //      if (currentEvent == HIGHLIGHT_GAME_MENU)
-     //      {
-//             setState(GAME);
-//             stateController(GAME_MENU_INIT);
-     //      }
-     //      if (currentEvent == HIGHLIGHT_SETUP_MENU)
-     //      {
-     //        setState(SETUP);
-     //        stateController(SETUP_MENU_INIT);
-     //      }
-//     //      break;
-//   case SETUP:
-// Serial.print("SETUP MODE");
-// switch (event)
-// {
-// case SETUP_MENU_INIT:
-//   setupView();
-//   break;
-// default:
-//   break;
-// }
-//   case GAME:
-//   Serial.print("GAME MODE");
-//   switch (event)
-//   {
-//   case MAIN_MENU_INIT:
-//     Serial.print("GO_BACK_TO_MENU");
-//     Serial.print(analogRead(A1));
-//     // Go back to game menu
-//     // setState(MENU);
-//     // stateController(MAIN_MENU_INIT);
-//     break;
-//   case GAME_MENU_INIT:
-//     // Go back to game menu
-//     // setState(MENU);
-//     // stateController(MAIN_MENU_INIT);
-//     break;
-//   case SHOW_NEXT_GAME:
-//     currentGameIndex = getNextSelectedGame();
-//     gamesView();
-//     break;
-//   case SELECT_MODE:
-//     // Bootup the game
-//     break;
-//   }
-// default:
-//   // do nothing.
-// }
-//   setEvent(event);
-// }
-
 // #define SIZE 200
 const int SW_pin = 8; // digital pin connected to switch output
+
+unsigned long previousMillis = 0;        // will store last time LED was updated
 
 void setup()
 {
   Serial.begin(9600);
 
+  // Sound
+  pinMode(buzzer, OUTPUT); // Set buzzer - pin 9 as an output SETUP...!!!
+  analogWrite(buzzer, volume);
+  
   // Setup Pins
   pinMode(SW_pin, INPUT);
   digitalWrite(SW_pin, HIGH);
-
+  noTone(buzzer);
+  
   // Notes from Adafruit sketch - must investigate.
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // initialize with the I2C addr 0x3C (for the 128x32)
@@ -289,6 +227,38 @@ void setup()
   // Initial Sequence. Show intro.
   setState(START);
   stateController(START_INTRO_INIT);
+
+    for (int thisNote = 0; thisNote < 75; thisNote++) {
+  
+      // to calculate the note duration, take one second divided by the note type.
+      //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+      int noteDuration = tempo / noteDurations[thisNote];
+      tone(buzzer, melody[thisNote], noteDuration);
+  
+      // to distinguish the notes, set a minimum time between them.
+      // the note's duration + 30% seems to work well:
+      int pauseBetweenNotes = noteDuration * 1.30;
+      
+      delay(pauseBetweenNotes);
+  
+//      unsigned long currentMillis = millis();
+  
+//      if (currentMillis - previousMillis >= pauseBetweenNotes) {
+//        
+//        // save the last time you blinked the LED
+//        previousMillis = currentMillis;
+//  
+//        // stop the tone playing:
+//        noTone(buzzer);
+//    
+//      }
+
+      noTone(buzzer);
+     
+  }
+
+  noTone(buzzer);
+  
 }
 
 void intro()
